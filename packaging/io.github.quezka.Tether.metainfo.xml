@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.quezka.Tether</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>Tether</name>
+  <summary>Your phone on your computer</summary>
+  <developer id="io.github.quezka"><name>Quezka</name></developer>
+  <description>
+    <p>Tether shows your Android phone's notifications (and lets you reply), its text messages and calls on the computer,
+      sends files both ways and shares the clipboard. It works over your home network, end-to-end encrypted with a key
+      made when you pair the phone.</p>
+  </description>
+  <launchable type="desktop-id">io.github.quezka.Tether.desktop</launchable>
+  <provides><binary>tether</binary></provides>
+  <url type="homepage">https://github.com/Quezka/tether</url>
+  <releases>
+    <release version="0.1.0" date="2026-11-14">
+      <description><p>First version: notifications, SMS, calls, files and clipboard.</p></description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

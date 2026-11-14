@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tether</string>
+    <string name="tagline">Your phone on your computer: notifications, messages, calls, files and clipboard.</string>
+    <string name="channel_link">Link to the computer</string>
+    <string name="running">Joined to your computer</string>
+    <string name="status">Status</string>
+    <string name="connected_to">Connected to %1$s</string>
+    <string name="connecting">Connecting…</string>
+    <string name="not_connected">Not connected to the computer</string>
+    <string name="pair_failed">That code didn\'t work. Check it on the computer.</string>
+    <string name="paired_with">Paired with %1$s</string>
+    <string name="forget">Forget this computer</string>
+    <string name="send_clipboard">Send my clipboard</string>
+    <string name="pair">Pair with a computer</string>
+    <string name="looking">Looking for computers running Tether on this Wi-Fi…</string>
+    <string name="code">Code shown on the computer</string>
+    <string name="pair_button">Pair</string>
+    <string name="permissions">What Tether may do</string>
+    <string name="permissions_hint">Notification access mirrors your notifications; SMS and phone let the computer read and send messages and answer calls.</string>
+    <string name="notification_access">Give notification access</string>
+    <string name="allow_sms_calls">Allow messages and calls</string>
+    <string name="share_hint">To send a file or text to the computer, share it with Tether.</string>
+    <string name="share_label">Send to computer</string>
+    <string name="sent">Sent to the computer</string>
+</resources>

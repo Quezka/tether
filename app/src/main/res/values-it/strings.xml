@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tether</string>
+    <string name="tagline">Il telefono sul computer: notifiche, messaggi, chiamate, file e appunti.</string>
+    <string name="channel_link">Collegamento al computer</string>
+    <string name="running">Collegato al tuo computer</string>
+    <string name="status">Stato</string>
+    <string name="connected_to">Collegato a %1$s</string>
+    <string name="connecting">Collegamento…</string>
+    <string name="not_connected">Non collegato al computer</string>
+    <string name="pair_failed">Quel codice non va. Controllalo sul computer.</string>
+    <string name="paired_with">Abbinato a %1$s</string>
+    <string name="forget">Dimentica questo computer</string>
+    <string name="send_clipboard">Invia i miei appunti</string>
+    <string name="pair">Abbina un computer</string>
+    <string name="looking">Cerco computer con Tether su questa Wi-Fi…</string>
+    <string name="code">Codice mostrato sul computer</string>
+    <string name="pair_button">Abbina</string>
+    <string name="permissions">Cosa può fare Tether</string>
+    <string name="permissions_hint">L\'accesso alle notifiche le mostra sul computer; SMS e telefono permettono al computer di leggere e inviare messaggi e rispondere alle chiamate.</string>
+    <string name="notification_access">Dai l\'accesso alle notifiche</string>
+    <string name="allow_sms_calls">Consenti messaggi e chiamate</string>
+    <string name="share_hint">Per mandare un file o un testo al computer, condividilo con Tether.</string>
+    <string name="share_label">Invia al computer</string>
+    <string name="sent">Inviato al computer</string>
+</resources>

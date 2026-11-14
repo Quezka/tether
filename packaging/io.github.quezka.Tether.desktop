@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Tether
+GenericName=Phone Link
+Comment=Your phone on your computer: notifications, messages, calls, files and clipboard
+Exec=tether
+Icon=io.github.quezka.Tether
+Terminal=false
+Categories=Utility;Network;
+Keywords=phone;android;sms;notifications;calls;link;
+StartupWMClass=io.github.quezka.Tether

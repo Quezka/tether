@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tether</string>
+    <string name="tagline">Телефон на компьютере: уведомления, сообщения, звонки, файлы и буфер обмена.</string>
+    <string name="channel_link">Связь с компьютером</string>
+    <string name="running">Связан с твоим компьютером</string>
+    <string name="status">Состояние</string>
+    <string name="connected_to">Подключено к %1$s</string>
+    <string name="connecting">Подключение…</string>
+    <string name="not_connected">Нет связи с компьютером</string>
+    <string name="pair_failed">Код не подошёл. Проверь его на компьютере.</string>
+    <string name="paired_with">Связан с %1$s</string>
+    <string name="forget">Забыть этот компьютер</string>
+    <string name="send_clipboard">Отправить буфер обмена</string>
+    <string name="pair">Связать с компьютером</string>
+    <string name="looking">Ищу компьютеры с Tether в этой сети Wi-Fi…</string>
+    <string name="code">Код с экрана компьютера</string>
+    <string name="pair_button">Связать</string>
+    <string name="permissions">Что может Tether</string>
+    <string name="permissions_hint">Доступ к уведомлениям показывает их на компьютере; SMS и телефон позволяют компьютеру читать и отправлять сообщения и отвечать на звонки.</string>
+    <string name="notification_access">Дать доступ к уведомлениям</string>
+    <string name="allow_sms_calls">Разрешить сообщения и звонки</string>
+    <string name="share_hint">Чтобы отправить файл или текст на компьютер, поделись им через Tether.</string>
+    <string name="share_label">Отправить на компьютер</string>
+    <string name="sent">Отправлено на компьютер</string>
+</resources>

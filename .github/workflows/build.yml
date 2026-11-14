@@ -1,0 +1,95 @@
+name: build
+
+# Tether: the computer side is Rust in suite-rs (crates/tether, at the commit in suite-rs.ref); the phone side is the
+# Android app here (app/). A tag vX.Y.Z publishes the .deb and the signed APK together.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out suite-rs at the pinned commit
+        run: |
+          git clone --quiet https://github.com/Quezka/suite-rs.git suite-rs
+          git -C suite-rs checkout --quiet "$(cat suite-rs.ref)"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: suite-rs
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev
+      - name: Test
+        run: cargo test --release -p tether --manifest-path suite-rs/Cargo.toml
+      - name: Build and package
+        run: |
+          cargo build --release -p tether --manifest-path suite-rs/Cargo.toml
+          version=$(grep -m1 '^version' suite-rs/crates/tether/Cargo.toml | cut -d'"' -f2)
+          scripts/build_deb.sh suite-rs/target/release/tether "$version" dist
+      - uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: Tether-Linux
+          path: dist/*.deb
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+      - name: Build the signed APK (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TETHER_KEYSTORE_B64: ${{ secrets.TETHER_KEYSTORE_B64 }}
+          TETHER_KEYSTORE_PASSWORD: ${{ secrets.TETHER_KEYSTORE_PASSWORD }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          grep -q "versionName = \"$version\"" app/build.gradle.kts || { echo "tag and versionName differ"; exit 1; }
+          echo "$TETHER_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/tether.jks"
+          export TETHER_KEYSTORE="$RUNNER_TEMP/tether.jks"
+          ./gradlew --no-daemon assembleRelease
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/Tether-$version-android.apk"
+      - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          retention-days: 1
+          name: Tether-Android
+          path: dist/*.apk
+
+  release:
+    needs: [desktop, android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          python3 scripts/release_notes.py "$version" > notes.md
+          cat >> notes.md <<'NOTES'
+
+          ## Install
+
+          **Computer (Debian / Ubuntu):** `sudo apt install ./quezka-tether_*_amd64.deb`, then open Tether and press *Pair a phone*.
+
+          **Phone (Android 9+):** install `Tether-…-android.apk`, open it on the same Wi-Fi, pick your computer and type
+          the code it shows. Then give it notification access and allow messages and calls.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "Tether $version" --notes-file notes.md \
+            artifacts/Tether-Linux/*.deb artifacts/Tether-Android/*.apk
