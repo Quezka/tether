@@ -105,6 +105,17 @@ class MainActivity : ComponentActivity() {
                         if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
                     }.toTypedArray())
                 }) { Text(stringResource(R.string.allow_sms_calls)) }
+                // battery limit -> MIUI/OEMs kill the link in the background => ask once to lift it
+                val power = getSystemService(android.os.PowerManager::class.java)
+                if (power != null && !power.isIgnoringBatteryOptimizations(packageName)) {
+                    Text(stringResource(R.string.background_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Button(onClick = {
+                        runCatching {
+                            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                android.net.Uri.parse("package:$packageName")))
+                        }.onFailure { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+                    }) { Text(stringResource(R.string.keep_running)) }
+                }
             }
             Text(stringResource(R.string.share_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

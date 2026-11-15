@@ -23,4 +23,6 @@
     <string name="share_hint">Чтобы отправить файл или текст на компьютер, поделись им через Tether.</string>
     <string name="share_label">Отправить на компьютер</string>
     <string name="sent">Отправлено на компьютер</string>
+    <string name="keep_running">Держать Tether на связи в фоне</string>
+    <string name="background_hint">Чтобы связь восстанавливалась сама, сними для Tether ограничение батареи. На телефонах Xiaomi включи ещё автозапуск для Tether.</string>
 </resources>

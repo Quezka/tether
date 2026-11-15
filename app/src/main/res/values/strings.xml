@@ -23,4 +23,6 @@
     <string name="share_hint">To send a file or text to the computer, share it with Tether.</string>
     <string name="share_label">Send to computer</string>
     <string name="sent">Sent to the computer</string>
+    <string name="keep_running">Keep Tether connected in the background</string>
+    <string name="background_hint">So the link comes back by itself, let Tether run without a battery limit. On Xiaomi phones also turn on Autostart for Tether.</string>
 </resources>
