@@ -25,4 +25,5 @@
     <string name="sent">Отправлено на компьютер</string>
     <string name="keep_running">Держать Tether на связи в фоне</string>
     <string name="background_hint">Чтобы связь восстанавливалась сама, сними для Tether ограничение батареи. На телефонах Xiaomi включи ещё автозапуск для Tether.</string>
+    <string name="looking_more">Ищу другие компьютеры в этой сети Wi-Fi…</string>
 </resources>

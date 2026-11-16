@@ -25,4 +25,5 @@
     <string name="sent">Inviato al computer</string>
     <string name="keep_running">Tieni Tether collegato in background</string>
     <string name="background_hint">Perché il collegamento torni da solo, lascia Tether senza limiti di batteria. Sui telefoni Xiaomi attiva anche l\'Avvio automatico per Tether.</string>
+    <string name="looking_more">Cerco altri computer su questa Wi-Fi…</string>
 </resources>

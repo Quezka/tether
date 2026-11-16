@@ -11,7 +11,7 @@ import java.net.Socket
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-/** One connection to the computer: the handshake, then encrypted JSON both ways. */
+/** One connection to one computer: the handshake, then encrypted JSON both ways. */
 class Link(
     private val store: Store,
     private val phoneName: String,
@@ -22,6 +22,8 @@ class Link(
     @Volatile private var socket: Socket? = null
     @Volatile var connected = false
         private set
+    /** Which computer (known before connecting, or learned when pairing). */
+    @Volatile var computerId: String? = null
 
     fun send(m: JSONObject) { if (connected) queue.offer(m) }
 
@@ -47,12 +49,11 @@ class Link(
             if (pairing) {
                 val paired = crypto.open(Protocol.readFrame(input) ?: return "wrong code")?.let { JSONObject(String(it)) }
                     ?: return "wrong code"
-                store.key = Base64.decode(paired.getString("key"), Base64.NO_WRAP)
-                store.computerId = paired.getString("id")
-                store.computerName = reply.optString("name")
-                store.lastHost = host
+                computerId = paired.getString("id")
+                store.put(Store.Pairing(computerId!!, reply.optString("name", "?"), host,
+                    Base64.decode(paired.getString("key"), Base64.NO_WRAP)))
             }
-            store.lastHost = host
+            computerId?.let { store.setHost(it, host) }
             connected = true
             onConnected(reply.optString("name"))
             queue.clear()

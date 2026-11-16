@@ -44,20 +44,25 @@ class LinkService : Service() {
     companion object {
         @Volatile var instance: LinkService? = null
         @Volatile var computers: Map<String, Protocol.Computer> = emptyMap()
-        @Volatile var status: String = ""
+        /** Per paired computer: what the link is doing now (shown in the app). */
+        @Volatile var statuses: Map<String, String> = emptyMap()
+        @Volatile var pairingStatus: String = ""
         @Volatile var pairingRequest: Pair<Protocol.Computer, String>? = null
-        var onChange: (() -> Unit)? = null
+        /** Compose reads this: any change above bumps it -> screen redraws (0.2 bug: no refresh after pairing). */
+        val version = androidx.compose.runtime.mutableIntStateOf(0)
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, LinkService::class.java))
         }
 
-        fun send(m: JSONObject) { instance?.link?.send(m) }
+        /** To every connected computer. */
+        fun send(m: JSONObject) { instance?.links?.values?.forEach { it.send(m) } }
     }
 
     private lateinit var store: Store
-    var link: Link? = null
-        private set
+    /** One link per paired computer (0.3: a phone with several computers). */
+    val links = java.util.concurrent.ConcurrentHashMap<String, Link>()
+    private val loops = java.util.concurrent.ConcurrentHashMap<String, Thread>()
     @Volatile private var running = true
     private var lock: WifiManager.MulticastLock? = null
     private val incoming = HashMap<String, Pair<String, java.io.ByteArrayOutputStream>>()
@@ -77,7 +82,7 @@ class LinkService : Service() {
         else startForeground(1, n)
         lock = getSystemService(WifiManager::class.java).createMulticastLock("tether").apply { setReferenceCounted(false); acquire() }
         Thread(::listen, "tether-beacons").apply { isDaemon = true; start() }
-        Thread(::connectLoop, "tether-link").apply { isDaemon = true; start() }
+        Thread(::superviseLoop, "tether-link").apply { isDaemon = true; start() }
         registerReceiver(battery, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         @Suppress("DEPRECATION")
         runCatching { getSystemService(TelephonyManager::class.java).listen(calls, PhoneStateListener.LISTEN_CALL_STATE) }
@@ -87,16 +92,27 @@ class LinkService : Service() {
 
     override fun onDestroy() {
         running = false
-        link?.close()
+        links.values.forEach { it.close() }
         lock?.release()
         runCatching { unregisterReceiver(battery) }
         instance = null
         super.onDestroy()
     }
 
-    private fun changed(text: String? = null) {
-        if (text != null) status = text
-        onChange?.invoke()
+    private fun changed() {
+        android.os.Handler(mainLooper).post { version.intValue++ }
+    }
+
+    private fun status(id: String?, text: String) {
+        if (id == null) pairingStatus = text else statuses = statuses + (id to text)
+        changed()
+    }
+
+    /** Closes one computer's link (forgotten); its loop ends on its own. */
+    fun drop(id: String) {
+        links.remove(id)?.close()
+        statuses = statuses - id
+        changed()
     }
 
     private fun listen() {
@@ -114,36 +130,55 @@ class LinkService : Service() {
 
     private fun phoneName() = Settings.Global.getString(contentResolver, Settings.Global.DEVICE_NAME) ?: Build.MODEL
 
-    private fun connectLoop() {
+    /** Starts a loop for each paired computer, and runs pairing requests. */
+    private fun superviseLoop() {
         while (running) {
-            val request = pairingRequest
-            val target: Triple<String, ByteArray, Boolean>? = when {
-                request != null -> Triple(request.first.host, request.second.toByteArray(), true)
-                store.paired -> (computers[store.computerId]?.host ?: store.lastHost)?.let { Triple(it, store.key!!, false) }
-                else -> null
+            for (p in store.pairings()) if (loops[p.id]?.isAlive != true)
+                loops[p.id] = Thread({ connectLoop(p.id) }, "tether-${p.id}").apply { isDaemon = true; start() }
+            pairingRequest?.let { request ->
+                pairingRequest = null
+                pair(request.first, request.second)
             }
-            if (target == null) { Thread.sleep(2000); continue }
-            pairingRequest = null
-            val l = Link(store, phoneName(), ::handle) { name ->
-                changed(getString(R.string.connected_to, name))
-                sendBattery()
+            Thread.sleep(1000)
+        }
+    }
+
+    private fun pair(computer: Protocol.Computer, code: String) {
+        val l = Link(store, phoneName(), {}, {})
+        status(null, getString(R.string.connecting))
+        val why = l.run(computer.host, computer.port, code.toByteArray(), true)
+        status(null, if (l.computerId != null && store.pairings().any { it.id == l.computerId }) getString(R.string.paired_with, computer.name)
+            else if (why == "wrong code") getString(R.string.pair_failed) else getString(R.string.pair_failed))
+    }
+
+    private fun connectLoop(id: String) {
+        while (running) {
+            val p = store.pairings().firstOrNull { it.id == id } ?: return  // forgotten
+            val host = computers[id]?.host ?: p.host
+            if (host == null) { Thread.sleep(2000); continue }
+            lateinit var l: Link
+            l = Link(store, phoneName(), { handle(l, it) }) { name ->
+                status(id, getString(R.string.connected_to, name))
+                sendBattery(link = l)
             }
-            link = l
-            changed(getString(R.string.connecting))
-            val why = l.run(target.first, request?.first?.port ?: 47821, target.second, target.third)
-            changed(if (target.third && !store.paired) getString(R.string.pair_failed) else getString(R.string.not_connected))
-            if (why == "wrong code") Thread.sleep(500) else Thread.sleep(4000)
+            l.computerId = id
+            links[id] = l
+            status(id, getString(R.string.connecting))
+            l.run(host, computers[id]?.port ?: 47821, p.key, false)
+            if (links[id] === l) links.remove(id)
+            if (store.pairings().any { it.id == id }) status(id, getString(R.string.not_connected))
+            Thread.sleep(4000)
         }
     }
 
     // ---- what the computer asks ----
 
-    private fun handle(m: JSONObject) {
+    private fun handle(from: Link, m: JSONObject) {
         when (m.optString("t")) {
             "reply" -> NotifWatcher.reply(this, m.optString("key"), m.optString("text"))
             "dismiss" -> NotifWatcher.instance?.cancelNotification(m.optString("key"))
             "sms_send" -> sendSms(m.optString("addr"), m.optString("body"))
-            "sms_get" -> link?.send(smsList())
+            "sms_get" -> from.send(smsList())
             "call_answer" -> calling { acceptRingingCall() }
             "call_reject" -> calling { endCall() }
             "clip" -> getSystemService(ClipboardManager::class.java)
@@ -198,7 +233,7 @@ class LinkService : Service() {
     }
 
     fun smsArrived(address: String, body: String, at: Long) {
-        link?.send(JSONObject().put("t", "sms_in").put("addr", address).put("name", contactName(address)).put("body", body).put("at", at))
+        send(JSONObject().put("t", "sms_in").put("addr", address).put("name", contactName(address)).put("body", body).put("at", at))
     }
 
     private fun saveDownload(name: String, data: ByteArray) {
@@ -214,7 +249,10 @@ class LinkService : Service() {
 
     /** Send a file or text the user shared with Tether. */
     fun shareFile(name: String, bytes: ByteArray) {
-        val l = link ?: return
+        for (l in links.values.filter { it.connected }) shareFile(l, name, bytes)
+    }
+
+    private fun shareFile(l: Link, name: String, bytes: ByteArray) {
         val id = Protocol.randomBytes(6).joinToString("") { "%02x".format(it) }
         l.send(JSONObject().put("t", "file_start").put("id", id).put("name", name).put("size", bytes.size))
         var at = 0
@@ -227,12 +265,13 @@ class LinkService : Service() {
     }
 
     private var lastLevel = -1
-    private fun sendBattery(intent: Intent? = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))) {
+    private fun sendBattery(intent: Intent? = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)), link: Link? = null) {
         intent ?: return
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
         val charging = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
         lastLevel = level
-        link?.send(JSONObject().put("t", "battery").put("level", level).put("charging", charging))
+        val m = JSONObject().put("t", "battery").put("level", level).put("charging", charging)
+        if (link != null) link.send(m) else send(m)
     }
 
     private val battery = object : BroadcastReceiver() {
@@ -247,7 +286,7 @@ class LinkService : Service() {
         override fun onCallStateChanged(state: Int, number: String?) {
             val s = when (state) { TelephonyManager.CALL_STATE_RINGING -> "ringing"; TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"; else -> "idle" }
             val n = number.orEmpty()
-            link?.send(JSONObject().put("t", "call").put("state", s).put("number", n).put("name", if (n.isEmpty()) "" else contactName(n)))
+            send(JSONObject().put("t", "call").put("state", s).put("number", n).put("name", if (n.isEmpty()) "" else contactName(n)))
         }
     }
 }

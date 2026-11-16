@@ -43,52 +43,53 @@ import io.github.quezka.tether.ui.TetherTheme
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
-    private var tick by mutableIntStateOf(0)
-    private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { tick++ }
+    private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { LinkService.version.intValue++ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         LinkService.start(this)
-        LinkService.onChange = { runOnUiThread { tick++ } }
-        setContent { TetherTheme { Surface(Modifier.fillMaxSize()) { Screen(tick) } } }
+        setContent { TetherTheme { Surface(Modifier.fillMaxSize()) { Screen() } } }
     }
 
-    override fun onResume() { super.onResume(); tick++ }
+    override fun onResume() { super.onResume(); LinkService.version.intValue++ }
 
     @Composable
-    private fun Screen(tick: Int) {
+    private fun Screen() {
         val store = remember { Store(this) }
+        @Suppress("UNUSED_VARIABLE") val v = LinkService.version.intValue  // read = redraw on every link change
+        val pairings = store.pairings()
         Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.tagline), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Panel(stringResource(R.string.status)) {
-                Text(LinkService.status.ifEmpty { stringResource(R.string.not_connected) }, style = MaterialTheme.typography.titleMedium)
-                if (store.paired) {
-                    Text(stringResource(R.string.paired_with, store.computerName ?: "?"))
-                    OutlinedButton(onClick = { store.forget(); LinkService.instance?.link?.close(); this@MainActivity.tick++ }) {
+                if (pairings.isEmpty()) Text(stringResource(R.string.not_connected), style = MaterialTheme.typography.titleMedium)
+                for (p in pairings) {
+                    Text(p.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(LinkService.statuses[p.id] ?: stringResource(R.string.not_connected))
+                    OutlinedButton(onClick = { store.forget(p.id); LinkService.instance?.drop(p.id) }) {
                         Text(stringResource(R.string.forget))
                     }
-                    Button(onClick = {
-                        val text = getSystemService(ClipboardManager::class.java).primaryClip?.getItemAt(0)?.coerceToText(this@MainActivity)
-                        if (text != null) LinkService.send(JSONObject().put("t", "clip").put("text", text.toString()))
-                    }) { Text(stringResource(R.string.send_clipboard)) }
                 }
+                if (pairings.isNotEmpty()) Button(onClick = {
+                    val text = getSystemService(ClipboardManager::class.java).primaryClip?.getItemAt(0)?.coerceToText(this@MainActivity)
+                    if (text != null) LinkService.send(JSONObject().put("t", "clip").put("text", text.toString()))
+                }) { Text(stringResource(R.string.send_clipboard)) }
             }
             Panel(stringResource(R.string.pair)) {
-                val found = LinkService.computers.values.sortedBy { it.name }
-                if (found.isEmpty()) Text(stringResource(R.string.looking), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (LinkService.pairingStatus.isNotEmpty()) Text(LinkService.pairingStatus, color = MaterialTheme.colorScheme.primary)
+                val found = LinkService.computers.values.filter { c -> pairings.none { it.id == c.id } }.sortedBy { it.name }
+                if (found.isEmpty()) Text(stringResource(if (pairings.isEmpty()) R.string.looking else R.string.looking_more),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 for (c in found) {
                     var code by remember(c.id) { mutableStateOf("") }
                     Text(c.name, style = MaterialTheme.typography.titleMedium)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(code, { code = it }, Modifier.weight(1f), singleLine = true,
                             label = { Text(stringResource(R.string.code)) })
-                        Button(onClick = {
-                            LinkService.pairingRequest = c to Protocol.normalCode(code)
-                            LinkService.instance?.link?.close()
-                        }, enabled = Protocol.normalCode(code).length == 8) { Text(stringResource(R.string.pair_button)) }
+                        Button(onClick = { LinkService.pairingRequest = c to Protocol.normalCode(code) },
+                            enabled = Protocol.normalCode(code).length == 8) { Text(stringResource(R.string.pair_button)) }
                     }
                 }
             }

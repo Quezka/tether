@@ -13,7 +13,7 @@ class ShareActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val service = LinkService.instance
-        if (service?.link?.connected != true) {
+        if (service?.links?.values?.any { it.connected } != true) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show()
             finish(); return
         }
