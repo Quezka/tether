@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.quezka.tether.ui.TetherTheme
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
@@ -119,6 +120,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Text(stringResource(R.string.share_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            UpdatePanel()
         }
     }
 }
@@ -131,5 +133,43 @@ private fun Panel(title: String, content: @Composable () -> Unit) {
             Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             content()
         }
+    }
+}
+
+/** OTA (0.3): newest GitHub release -> download APK -> system installer. */
+@Composable
+private fun UpdatePanel() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var state by remember { mutableStateOf("") }
+    var release by remember { mutableStateOf<io.github.quezka.tether.update.Release?>(null) }
+    val current = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0" }
+    Panel(stringResource(R.string.updates)) {
+        Text(stringResource(R.string.version_now, current), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (state.isNotEmpty()) Text(state)
+        val r = release
+        if (r == null) OutlinedButton(onClick = {
+            state = context.getString(R.string.update_checking)
+            scope.launch {
+                val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { io.github.quezka.tether.update.ReleaseFeed.latest("Quezka/tether") }.getOrNull()
+                }
+                release = io.github.quezka.tether.update.newerThan(current, found)
+                state = context.getString(if (release == null) R.string.update_none else R.string.update_ready, release?.version?.toString() ?: "")
+            }
+        }) { Text(stringResource(R.string.update_check)) }
+        else Button(onClick = {
+            if (!io.github.quezka.tether.update.Updater.canInstall(context)) {
+                context.startActivity(io.github.quezka.tether.update.Updater.permissionIntent(context)); return@Button
+            }
+            scope.launch {
+                val apk = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { io.github.quezka.tether.update.Updater.download(context, r) { p ->
+                        state = context.getString(R.string.update_downloading, (p * 100).toInt()) } }.getOrNull()
+                }
+                if (apk == null) state = context.getString(R.string.update_failed)
+                else io.github.quezka.tether.update.Updater.install(context, apk)
+            }
+        }) { Text(stringResource(R.string.update_install)) }
     }
 }

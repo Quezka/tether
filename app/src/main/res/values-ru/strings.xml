@@ -26,4 +26,13 @@
     <string name="keep_running">Держать Tether на связи в фоне</string>
     <string name="background_hint">Чтобы связь восстанавливалась сама, сними для Tether ограничение батареи. На телефонах Xiaomi включи ещё автозапуск для Tether.</string>
     <string name="looking_more">Ищу другие компьютеры в этой сети Wi-Fi…</string>
+    <string name="updates">Обновления</string>
+    <string name="version_now">Версия %1$s</string>
+    <string name="update_check">Проверить обновления</string>
+    <string name="update_checking">Проверяю…</string>
+    <string name="update_none">У вас последняя версия.</string>
+    <string name="update_ready">Вышла версия %1$s.</string>
+    <string name="update_install">Скачать и установить</string>
+    <string name="update_downloading">Загрузка… %1$d%%</string>
+    <string name="update_failed">Не удалось скачать. Попробуйте позже.</string>
 </resources>

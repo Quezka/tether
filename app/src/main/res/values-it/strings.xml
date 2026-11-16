@@ -26,4 +26,13 @@
     <string name="keep_running">Tieni Tether collegato in background</string>
     <string name="background_hint">Perché il collegamento torni da solo, lascia Tether senza limiti di batteria. Sui telefoni Xiaomi attiva anche l\'Avvio automatico per Tether.</string>
     <string name="looking_more">Cerco altri computer su questa Wi-Fi…</string>
+    <string name="updates">Aggiornamenti</string>
+    <string name="version_now">Versione %1$s</string>
+    <string name="update_check">Cerca aggiornamenti</string>
+    <string name="update_checking">Controllo…</string>
+    <string name="update_none">Hai l\'ultima versione.</string>
+    <string name="update_ready">È uscita la versione %1$s.</string>
+    <string name="update_install">Scarica e installa</string>
+    <string name="update_downloading">Download… %1$d%%</string>
+    <string name="update_failed">Download non riuscito. Riprova più tardi.</string>
 </resources>
