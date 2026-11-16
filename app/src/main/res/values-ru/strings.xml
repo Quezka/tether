@@ -35,4 +35,9 @@
     <string name="update_install">Скачать и установить</string>
     <string name="update_downloading">Загрузка… %1$d%%</string>
     <string name="update_failed">Не удалось скачать. Попробуйте позже.</string>
+    <string name="connected_relay">Подключено к %1$s (через интернет)</string>
+    <string name="relay_title">Вне Wi-Fi</string>
+    <string name="relay_hint">Ретранслятор на вашем сервере соединяет телефон и компьютеры через интернет, когда вы не в одной сети Wi-Fi. Сообщения остаются зашифрованными. Укажите тот же адрес, что и на компьютере.</string>
+    <string name="relay_address">Адрес ретранслятора</string>
+    <string name="save">Сохранить</string>
 </resources>

@@ -24,17 +24,26 @@ class Link(
         private set
     /** Which computer (known before connecting, or learned when pairing). */
     @Volatile var computerId: String? = null
+    @Volatile var viaRelay = false
 
     fun send(m: JSONObject) { if (connected) queue.offer(m) }
 
     fun close() { runCatching { socket?.close() } }
 
     /** Runs until the connection ends. [secret] is the pairing code (pairing) or the long-term key. Returns why it ended. */
-    fun run(host: String, port: Int, secret: ByteArray, pairing: Boolean): String {
+    fun run(host: String, port: Int, secret: ByteArray, pairing: Boolean, relayRoom: String? = null): String {
         val s = Socket()
         socket = s
         try {
             s.connect(InetSocketAddress(host, port), 5000)
+            if (relayRoom != null) {
+                // relay: say our room, wait for the computer's waiting line to be joined ("ok\n"), then link as usual
+                s.getOutputStream().apply { write(Protocol.relayHello("phone", relayRoom).toByteArray()); flush() }
+                s.soTimeout = 15_000
+                val ok = ByteArray(3)
+                java.io.DataInputStream(s.getInputStream()).readFully(ok)
+                if (String(ok) != "ok\n") return "relay refused"
+            }
             s.soTimeout = 90_000
             val input = DataInputStream(BufferedInputStream(s.getInputStream()))
             val out = DataOutputStream(BufferedOutputStream(s.getOutputStream()))
@@ -53,8 +62,9 @@ class Link(
                 store.put(Store.Pairing(computerId!!, reply.optString("name", "?"), host,
                     Base64.decode(paired.getString("key"), Base64.NO_WRAP)))
             }
-            computerId?.let { store.setHost(it, host) }
+            if (relayRoom == null) computerId?.let { store.setHost(it, host) }
             connected = true
+            viaRelay = relayRoom != null
             onConnected(reply.optString("name"))
             queue.clear()
             val writer = Thread {

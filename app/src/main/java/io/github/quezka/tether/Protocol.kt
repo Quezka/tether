@@ -34,6 +34,22 @@ object Protocol {
         return d.digest()
     }
 
+    const val RELAY_PORT = 47822
+
+    /** Meeting point at the relay for one pairing (= desktop `domain::relay_room`). */
+    fun relayRoom(key: ByteArray): String = java.security.MessageDigest.getInstance("SHA-256")
+        .apply { update("tether relay".toByteArray()); update(key) }.digest().take(16).joinToString("") { "%02x".format(it) }
+
+    fun relayHello(role: String, room: String) = "TETHERRELAY1 $role $room\n"
+
+    /** "host" or "host:port". */
+    fun relayAddress(text: String): Pair<String, Int>? {
+        val t = text.trim()
+        if (t.isEmpty()) return null
+        val port = t.substringAfterLast(':', "").toIntOrNull()
+        return if (port != null && t.contains(':')) t.substringBeforeLast(':') to port else t to RELAY_PORT
+    }
+
     fun normalCode(typed: String) = typed.filter { it.isLetterOrDigit() && it.code < 128 }.lowercase()
 
     fun randomBytes(n: Int) = ByteArray(n).also(random::nextBytes)

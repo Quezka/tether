@@ -35,4 +35,9 @@
     <string name="update_install">Download and install</string>
     <string name="update_downloading">Downloading… %1$d%%</string>
     <string name="update_failed">Download failed. Try again later.</string>
+    <string name="connected_relay">Connected to %1$s (over the internet)</string>
+    <string name="relay_title">Away from Wi-Fi</string>
+    <string name="relay_hint">A relay on your own server joins this phone and your computers over the internet when you aren\'t on the same Wi-Fi. Messages stay encrypted end to end. Use the same address as on the computer.</string>
+    <string name="relay_address">Relay address</string>
+    <string name="save">Save</string>
 </resources>

@@ -27,14 +27,17 @@ jobs:
         run: cargo test --release -p tether --manifest-path suite-rs/Cargo.toml
       - name: Build and package
         run: |
-          cargo build --release -p tether --manifest-path suite-rs/Cargo.toml
+          cargo build --release -p tether -p tether-relay --manifest-path suite-rs/Cargo.toml
           version=$(grep -m1 '^version' suite-rs/crates/tether/Cargo.toml | cut -d'"' -f2)
           scripts/build_deb.sh suite-rs/target/release/tether "$version" dist
+          cp suite-rs/target/release/tether-relay "dist/tether-relay-$version-linux-x64"
       - uses: actions/upload-artifact@v4
         with:
           retention-days: 1
           name: Tether-Linux
-          path: dist/*.deb
+          path: |
+            dist/*.deb
+            dist/tether-relay-*
 
   android:
     runs-on: ubuntu-latest
@@ -90,6 +93,9 @@ jobs:
 
           **Phone (Android 9+):** install `Tether-…-android.apk`, open it on the same Wi-Fi, pick your computer and type
           the code it shows. Then give it notification access and allow messages and calls.
+
+          **Away from Wi-Fi (optional):** run `tether-relay-…-linux-x64` on a server you own (port 47822 open), then put
+          its address in *Away from Wi-Fi* on both the computer and the phone. Messages stay encrypted end to end.
           NOTES
           gh release create "$GITHUB_REF_NAME" --verify-tag --title "Tether $version" --notes-file notes.md \
-            artifacts/Tether-Linux/*.deb artifacts/Tether-Android/*.apk
+            artifacts/Tether-Linux/*.deb artifacts/Tether-Linux/tether-relay-* artifacts/Tether-Android/*.apk

@@ -2,6 +2,14 @@
 
 All notable changes to Tether. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.3.0] - 2026-11-16
+
+- **One phone, several computers:** pair the phone with as many computers as you like; each keeps its own link.
+- **Away from Wi-Fi:** a small relay (`tether-relay`, on a server you own) joins phone and computer over the internet when they aren't on the same Wi-Fi. Messages stay encrypted end to end; the relay only passes bytes along.
+- **Tray icon** on the computer: click to show Tether, menu to quit, and the link status as its tooltip.
+- **Phone updates itself:** Check for updates downloads the newest Tether and installs it.
+- **Fixed:** the phone's screen didn't refresh after pairing.
+
 ## [0.2.0] - 2026-11-15
 
 - **A real desktop app:** the phone and its sections in a sidebar; Messages shows your conversations beside the open one, with bubbles, and Enter sends. A narrow window goes back to tabs.

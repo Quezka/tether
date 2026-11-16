@@ -152,19 +152,27 @@ class LinkService : Service() {
     }
 
     private fun connectLoop(id: String) {
+        var lanFails = 0
         while (running) {
             val p = store.pairings().firstOrNull { it.id == id } ?: return  // forgotten
-            val host = computers[id]?.host ?: p.host
-            if (host == null) { Thread.sleep(2000); continue }
+            val seen = computers[id]
+            val host = seen?.host ?: p.host
+            val relay = store.relay?.let(Protocol::relayAddress)
+            // lan first (beacon seen, or last host still answers); relay when away
+            val useRelay = relay != null && (seen == null && (host == null || lanFails >= 1))
+            if (!useRelay && host == null) { Thread.sleep(2000); continue }
             lateinit var l: Link
             l = Link(store, phoneName(), { handle(l, it) }) { name ->
-                status(id, getString(R.string.connected_to, name))
+                status(id, getString(if (l.viaRelay) R.string.connected_relay else R.string.connected_to, name))
                 sendBattery(link = l)
             }
             l.computerId = id
             links[id] = l
             status(id, getString(R.string.connecting))
-            l.run(host, computers[id]?.port ?: 47821, p.key, false)
+            val why = if (useRelay) l.run(relay!!.first, relay.second, p.key, false, Protocol.relayRoom(p.key))
+                else l.run(host!!, seen?.port ?: 47821, p.key, false)
+            if (!useRelay) lanFails = if (l.computerId != null && why == "closed") 0 else lanFails + 1
+            else lanFails = 0  // back on lan next time if the beacon shows up
             if (links[id] === l) links.remove(id)
             if (store.pairings().any { it.id == id }) status(id, getString(R.string.not_connected))
             Thread.sleep(4000)

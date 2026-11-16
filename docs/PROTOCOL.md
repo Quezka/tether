@@ -25,3 +25,10 @@ messages:[{in,body,at}]}]}`, `sms_in {addr,name,body,at}`, `call {state: ringing
 Computer → phone: `reply {key,text}`, `dismiss {key}`, `sms_send {addr,body}`, `sms_get`, `call_answer`,
 `call_reject`, `clip {text}`.
 Both ways: `file_start {id,name,size}`, `file_piece {id,data:b64}`, `file_end {id}` (pieces ≤ 1 MiB).
+
+## Relay (away from Wi-Fi, 0.3)
+Both sides dial `relay:47822` (TCP) and send one line `TETHERRELAY1 <pc|phone> <room>\n`, room = first 16 bytes of
+SHA-256("tether relay" ‖ long-term key) as hex. When a `pc` and a `phone` with the same room are both there, the relay
+writes `ok\n` to each and pipes bytes both ways; from then on it's the normal handshake above (phone speaks first).
+The computer keeps one waiting relay connection per paired phone; the phone uses the relay only when it can't reach
+the computer on the Wi-Fi. Pairing needs the Wi-Fi (the code never goes through the relay).

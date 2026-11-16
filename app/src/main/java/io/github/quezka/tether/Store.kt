@@ -46,4 +46,9 @@ class Store(context: Context) {
     @Synchronized fun forget(id: String) = save(pairings().filter { it.id != id })
 
     val paired get() = pairings().isNotEmpty()
+
+    /** relay "host[:port]" for away from wi-fi; null = off */
+    var relay: String?
+        get() = prefs.getString("relay", null)?.takeIf { it.isNotBlank() }
+        set(v) = prefs.edit().putString("relay", v?.trim().orEmpty()).apply()
 }

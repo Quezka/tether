@@ -20,6 +20,13 @@ class ProtocolTest {
         assertNull(Protocol.Crypto(Protocol.sessionKey("y".toByteArray(), ByteArray(16), ByteArray(16))).open(sealed))
     }
 
+    @Test fun relayRoomMatchesTheComputer() {
+        // = rust domain relay_tests::room_matches_the_phone
+        org.junit.Assert.assertEquals("11f9c4d690fca1e143bcde677dac9fde", Protocol.relayRoom(ByteArray(32) { 1 }))
+        org.junit.Assert.assertEquals("home.example" to 9000, Protocol.relayAddress("home.example:9000"))
+        org.junit.Assert.assertEquals("home.example" to Protocol.RELAY_PORT, Protocol.relayAddress(" home.example "))
+    }
+
     @Test fun beaconsCodesAndNames() {
         assertEquals(Protocol.Computer("qpc", "10.0.0.2", 47821, "ab"), Protocol.parseBeacon("TETHER1|qpc|47821|ab", "10.0.0.2"))
         assertNull(Protocol.parseBeacon("TETHER1|qpc|x|ab", "h"))

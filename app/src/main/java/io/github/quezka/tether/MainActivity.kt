@@ -94,6 +94,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+            Panel(stringResource(R.string.relay_title)) {
+                var relay by remember { mutableStateOf(store.relay.orEmpty()) }
+                Text(stringResource(R.string.relay_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(relay, { relay = it }, Modifier.fillMaxWidth(), singleLine = true,
+                    label = { Text(stringResource(R.string.relay_address)) })
+                if (relay.trim() != store.relay.orEmpty()) Button(onClick = { store.relay = relay; LinkService.version.intValue++ }) {
+                    Text(stringResource(R.string.save))
+                }
+            }
             Panel(stringResource(R.string.permissions)) {
                 Text(stringResource(R.string.permissions_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Button(onClick = { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }) {
