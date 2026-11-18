@@ -11,6 +11,8 @@ import javax.crypto.spec.SecretKeySpec
 /** The protocol (docs/PROTOCOL.md), byte for byte the same as the computer's (suite-rs/crates/tether/src/domain). */
 object Protocol {
     const val BEACON_PORT = 47820
+    /** RFCOMM channel the computer listens on (same as desktop `RFCOMM_CHANNEL`) */
+    const val RFCOMM_CHANNEL = 11
     const val MAX_FRAME = 4 * 1024 * 1024
     const val FILE_PIECE = 512 * 1024
     private const val MAGIC = "TETHER1"

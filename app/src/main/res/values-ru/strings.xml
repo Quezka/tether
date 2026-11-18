@@ -40,4 +40,7 @@
     <string name="relay_hint">Ретранслятор на вашем сервере соединяет телефон и компьютеры через интернет, когда вы не в одной сети Wi-Fi. Сообщения остаются зашифрованными. Укажите тот же адрес, что и на компьютере.</string>
     <string name="relay_address">Адрес ретранслятора</string>
     <string name="save">Сохранить</string>
+    <string name="connected_bluetooth">Подключено к %1$s (через Bluetooth)</string>
+    <string name="bluetooth_title">Подключаться и по Bluetooth</string>
+    <string name="bluetooth_hint">Рядом, без Wi-Fi. Сначала соедините телефон с компьютером в настройках Bluetooth Android и включите эту же опцию в Tether на компьютере.</string>
 </resources>

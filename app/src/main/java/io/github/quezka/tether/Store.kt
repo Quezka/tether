@@ -47,6 +47,15 @@ class Store(context: Context) {
 
     val paired get() = pairings().isNotEmpty()
 
+    /** also reach paired computers over Bluetooth when no wi-fi */
+    var bluetooth: Boolean
+        get() = prefs.getBoolean("bluetooth", false)
+        set(v) = prefs.edit().putBoolean("bluetooth", v).apply()
+
+    /** computer id -> Bluetooth address that worked last (skip trying every bonded device) */
+    fun btAddress(id: String): String? = prefs.getString("bt_$id", null)
+    fun setBtAddress(id: String, address: String) = prefs.edit().putString("bt_$id", address).apply()
+
     /** relay "host[:port]" for away from wi-fi; null = off */
     var relay: String?
         get() = prefs.getString("relay", null)?.takeIf { it.isNotBlank() }

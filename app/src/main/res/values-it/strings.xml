@@ -40,4 +40,7 @@
     <string name="relay_hint">Un relay sul tuo server collega questo telefono e i tuoi computer via internet quando non siete sulla stessa Wi-Fi. I messaggi restano cifrati da un capo all\'altro. Usa lo stesso indirizzo del computer.</string>
     <string name="relay_address">Indirizzo del relay</string>
     <string name="save">Salva</string>
+    <string name="connected_bluetooth">Connesso a %1$s (via Bluetooth)</string>
+    <string name="bluetooth_title">Connetti anche via Bluetooth</string>
+    <string name="bluetooth_hint">Da vicino, senza Wi-Fi. Prima accoppia il telefono con il computer nelle impostazioni Bluetooth di Android, poi attiva la stessa opzione in Tether sul computer.</string>
 </resources>

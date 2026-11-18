@@ -159,7 +159,10 @@ class LinkService : Service() {
             val host = seen?.host ?: p.host
             val relay = store.relay?.let(Protocol::relayAddress)
             // lan first (beacon seen, or last host still answers); relay when away
-            val useRelay = relay != null && (seen == null && (host == null || lanFails >= 1))
+            val away = seen == null && (host == null || lanFails >= 1)
+            // no lan -> bluetooth first (close by, no internet needed), relay after
+            if (away && store.bluetooth && tryBluetooth(id, p.key)) { lanFails = 0; Thread.sleep(2000); continue }
+            val useRelay = relay != null && away
             if (!useRelay && host == null) { Thread.sleep(2000); continue }
             lateinit var l: Link
             l = Link(store, phoneName(), { handle(l, it) }) { name ->
@@ -177,6 +180,36 @@ class LinkService : Service() {
             if (store.pairings().any { it.id == id }) status(id, getString(R.string.not_connected))
             Thread.sleep(4000)
         }
+    }
+
+    /** One Bluetooth try at this computer: the address that worked last, else every bonded computer. True = was connected. */
+    @SuppressLint("MissingPermission")
+    private fun tryBluetooth(id: String, key: ByteArray): Boolean {
+        if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return false
+        val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return false
+        if (!adapter.isEnabled) return false
+        val bonded = runCatching { adapter.bondedDevices.toList() }.getOrDefault(emptyList())
+        val known = store.btAddress(id)
+        val candidates = bonded.filter { it.address == known } + bonded.filter {
+            it.address != known && it.bluetoothClass?.majorDeviceClass == android.bluetooth.BluetoothClass.Device.Major.COMPUTER
+        }
+        for (d in candidates) {
+            lateinit var l: Link
+            l = Link(store, phoneName(), { handle(l, it) }) { name ->
+                status(id, getString(R.string.connected_bluetooth, name))
+                sendBattery(link = l)
+            }
+            l.computerId = id
+            l.viaBluetooth = true
+            links[id] = l
+            status(id, getString(R.string.connecting))
+            l.runBluetooth(d, key)
+            if (links[id] === l) links.remove(id)
+            // wrong computer -> handshake fails before connect; right one -> remember it
+            if (l.wasConnected) { store.setBtAddress(id, d.address); status(id, getString(R.string.not_connected)); return true }
+        }
+        return false
     }
 
     // ---- what the computer asks ----

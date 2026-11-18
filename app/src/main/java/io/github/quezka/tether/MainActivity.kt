@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -102,6 +103,15 @@ class MainActivity : ComponentActivity() {
                 if (relay.trim() != store.relay.orEmpty()) Button(onClick = { store.relay = relay; LinkService.version.intValue++ }) {
                     Text(stringResource(R.string.save))
                 }
+                var bt by remember { mutableStateOf(store.bluetooth) }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.bluetooth_title), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Switch(bt, { on ->
+                        bt = on; store.bluetooth = on
+                        if (on && Build.VERSION.SDK_INT >= 31) ask.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT))
+                    })
+                }
+                Text(stringResource(R.string.bluetooth_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Panel(stringResource(R.string.permissions)) {
                 Text(stringResource(R.string.permissions_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
