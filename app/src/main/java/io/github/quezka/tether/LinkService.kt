@@ -44,6 +44,8 @@ class LinkService : Service() {
     companion object {
         @Volatile var instance: LinkService? = null
         @Volatile var computers: Map<String, Protocol.Computer> = emptyMap()
+        /** computer id -> when its beacon was last heard (ms); old = gone from this wi-fi */
+        val beaconAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
         /** Per paired computer: what the link is doing now (shown in the app). */
         @Volatile var statuses: Map<String, String> = emptyMap()
         @Volatile var pairingStatus: String = ""
@@ -123,6 +125,7 @@ class LinkService : Service() {
             val p = DatagramPacket(buf, buf.size)
             if (runCatching { socket.receive(p) }.isFailure) continue
             val c = Protocol.parseBeacon(String(p.data, 0, p.length), p.address.hostAddress ?: continue) ?: continue
+            beaconAt[c.id] = System.currentTimeMillis()
             if (computers[c.id] != c) { computers = computers + (c.id to c); changed() }
         }
         socket.close()
@@ -155,7 +158,8 @@ class LinkService : Service() {
         var lanFails = 0
         while (running) {
             val p = store.pairings().firstOrNull { it.id == id } ?: return  // forgotten
-            val seen = computers[id]
+            // beacon older than ~15 s -> not on this wi-fi now (bug: map never expired => no relay/bt fallback)
+            val seen = computers[id]?.takeIf { System.currentTimeMillis() - (beaconAt[id] ?: 0) < 15_000 }
             val host = seen?.host ?: p.host
             val relay = store.relay?.let(Protocol::relayAddress)
             // lan first (beacon seen, or last host still answers); relay when away
