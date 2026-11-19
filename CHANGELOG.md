@@ -2,6 +2,12 @@
 
 All notable changes to Tether. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.0] - 2026-11-19
+
+- **Bluetooth:** with no Wi-Fi around, the phone reaches a computer it's Bluetooth-paired with directly. Turn on "Also connect over Bluetooth" on both (Linux computers).
+- **Fixed:** after leaving the Wi-Fi the phone kept trying the old address and never switched to the relay.
+- Test builds of the phone app install beside the regular one.
+
 ## [0.3.0] - 2026-11-16
 
 - **One phone, several computers:** pair the phone with as many computers as you like; each keeps its own link.
