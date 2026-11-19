@@ -10,6 +10,6 @@ signing key @ `~/.local/share/tether-signing/` + gh secret `TETHER_KEYSTORE_B64`
 release: bump `crates/tether/Cargo.toml` + `app/build.gradle.kts` versionName/Code + CHANGELOG + metainfo -> tag `vX.Y.Z`
 ## 0.3
 many pcs per phone (`Store.pairings`, one `Link` per pc @ `LinkService.links`); relay = `suite-rs/crates/tether-relay` (std only) + `docs/PROTOCOL.md`; tray = kit `tray.rs` (ksni); ota = `update/` (from vesper)
-todo: bluetooth (bluer rfcomm desktop + android BluetoothSocket); relay not deployed (user server)
+bluetooth = 0.4.0 (raw rfcomm ch `11` libc desktop + hidden `createInsecureRfcommSocket` android); todo: relay not deployed (user server)
 ## risk
 untested on real phone by claude; sms/calls need user grant; MIUI may kill bg service -> user: autostart + no battery limit
