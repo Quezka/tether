@@ -33,6 +33,11 @@ android {
         }
     }
     buildTypes {
+        // debug = own id -> installs beside the signed release (test builds, no key on this machine)
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             if (secret("TETHER_KEYSTORE") != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
